@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <title>Game Template</title>
     <script src="js/three.min.js"></script>
+    <script src="js/WebglSupport.js"></script>
     <style>
         body {
             margin: 0;
@@ -15,11 +16,16 @@
 </head>
 <body>
 <script>
+
     var scene, camera, renderer;
     var geometry, material, mesh;
-
-    init();
-    animate();
+    if (Detector.webgl) {
+        init();
+        animate();
+    } else {
+        var warning = Detector.getWebGLErrorMessage();
+        document.getElementById('container').appendChild(warning);
+    }
 
     function init() {
 
