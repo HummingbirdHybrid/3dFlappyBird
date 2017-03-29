@@ -18,10 +18,12 @@
 <script>
 
     var scene, camera, renderer;
-    var geometry, material, mesh;
+    var geometry, material;
+    var plane,skySphere,persona;
+    var sceneSpeed=1;
     if (Detector.webgl) {
-        init();
-        animate();
+            init();
+            animate();
     } else {
         var warning = Detector.getWebGLErrorMessage();
         document.body.appendChild(warning);
@@ -32,35 +34,58 @@
         scene = new THREE.Scene();
 
         camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 10000 );
-        camera.position.z = 1000;
-        camera.lookAt(new THREE.Vector3(500,0,500));
+        camera.position.z = 500;
 
-        texture	= THREE.ImageUtils.loadTexture('images/galaxy_starfield.png');
+        var  galaxyTexture	= THREE.ImageUtils.loadTexture('images/galaxy_starfield.png');
         material	= new THREE.MeshBasicMaterial({
-            map	: texture,
+            map	: galaxyTexture,
             side	: THREE.BackSide,
             color	: 0x808080,
         });
          geometry	= new THREE.SphereGeometry(9000, 32, 32);
-         mesh	= new THREE.Mesh(geometry, material);
-         scene.add(mesh);
+         skySphere	= new THREE.Mesh(geometry, material);
+         scene.add(skySphere);
 
-
-        var light = new THREE.PointLight(0xFFFF00);
-        /* position the light so it shines on the cube (x, y, z) */
+        light = new THREE.PointLight(0xFFFF00);
         light.position.set(100, 0, 250);
         scene.add(light);
 
-        geometry = new THREE.BoxGeometry( 200, 200, 200 );
-        material = new THREE.MeshLambertMaterial( { color: 0xfd59d7} );
+        geometry = new THREE.PlaneGeometry( window.innerWidth, window.innerHeight , 10, 10 );
+        material = new THREE.MeshLambertMaterial(
+            {
+                color: 0x4BD121
+            });
+        plane = new THREE.Mesh(geometry,material);
 
-        mesh = new THREE.Mesh( geometry, material );
-        scene.add( mesh );
+        scene.add( plane );
 
-        geometry = new THREE.TorusKnotGeometry( 270, 10, 1280,32 );
-        material = new THREE.MeshLambertMaterial( { color: 0xfd59d7} );
-        mesh = new THREE.Mesh( geometry, material );
-        scene.add( mesh );
+        geometry = new THREE.CubeGeometry(100,100,100);
+        material = new THREE.MeshLambertMaterial({
+            color: 'red',
+            wireframe: true
+        });
+        persona = new THREE.Mesh(geometry,material);
+        persona.position.z=50;
+        persona.position.x=-400;
+        scene.add(persona);
+
+        geometry = new THREE.CubeGeometry(100,900,100);
+        material = new THREE.MeshLambertMaterial(
+            {
+                color:'black',
+
+            }
+        );
+        var obsticle1 = new THREE.Mesh(geometry,material);
+        obsticle1.position.y=plane.geometry.parameters.height/2;
+        obsticle1.position.z = 50;
+        scene.add(obsticle1);
+
+        var obsticle2 = new THREE.Mesh(geometry,material);
+        obsticle2.position.y=-plane.geometry.parameters.height/2;
+        obsticle2.position.x=plane.geometry.parameters.width/2;
+        obsticle2.position.z = 50;
+        scene.add(obsticle2);
 
         renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize( window.innerWidth, window.innerHeight );
@@ -70,13 +95,16 @@
         document.body.appendChild( renderer.domElement );
 
     }
+
     function animate() {
 
         requestAnimationFrame( animate );
 
-
-        mesh.rotation.x += 0.01;
-        mesh.rotation.y += 0.02;
+        camera.position.x+=sceneSpeed;
+        plane.position.x+=sceneSpeed;
+        light.position.x+=sceneSpeed;
+        skySphere.position.x+=sceneSpeed;
+        persona.position.x+=sceneSpeed;
         renderer.render( scene, camera );
 
     }
