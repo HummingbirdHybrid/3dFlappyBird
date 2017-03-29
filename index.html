@@ -20,7 +20,7 @@
 
     var scene, camera, renderer;
     var geometry, material;
-    var plane,skySphere,persona;
+    var plane,skySphere,persona,obsticle1,obsticle2;
     var sceneSpeed=1;
     if (Detector.webgl) {
             init();
@@ -79,12 +79,12 @@
 
             }
         );
-        var obsticle1 = new THREE.Mesh(geometry,material);
+        obsticle1 = new THREE.Mesh(geometry,material);
         obsticle1.position.y=plane.geometry.parameters.height/2;
         obsticle1.position.z = 50;
         scene.add(obsticle1);
 
-        var obsticle2 = new THREE.Mesh(geometry,material);
+        obsticle2 = new THREE.Mesh(geometry,material);
         obsticle2.position.y=-plane.geometry.parameters.height/2;
         obsticle2.position.x=plane.geometry.parameters.width/2;
         obsticle2.position.z = 50;
@@ -107,6 +107,10 @@
 
     }
 
+    window.addEventListener('keydown',function () {
+        persona.position.y+=5;
+    })
+
     function animate() {
 
         requestAnimationFrame( animate );
@@ -119,6 +123,8 @@
         persona.position.x+=sceneSpeed;
         persona.position.y-=sceneSpeed;
         renderer.render( scene, camera );
+
+
 
     }
 
