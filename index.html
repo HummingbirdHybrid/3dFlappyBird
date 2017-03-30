@@ -37,7 +37,7 @@
         camera = new THREE.PerspectiveCamera( 75, window.outerWidth / window.outerHeight, 0.1, 10000 );
         camera.position.z = 500;
 
-        var controls = new THREE.OrbitControls(camera)
+        var controls = new THREE.OrbitControls(camera);
 
         var  galaxyTexture	= THREE.ImageUtils.loadTexture('resources/galaxy_starfield.png');
         material	= new THREE.MeshBasicMaterial({
@@ -109,7 +109,7 @@
 
     window.addEventListener('keydown',function () {
         persona.position.y+=5;
-    })
+    });
 
     function animate() {
 
@@ -119,9 +119,9 @@
         plane.position.x+=sceneSpeed;
         light.position.x+=sceneSpeed;
         skySphere.position.x+=sceneSpeed;
-
-        persona.position.x+=sceneSpeed;
         persona.position.y-=sceneSpeed;
+        persona.position.x+=sceneSpeed;
+
         renderer.render( scene, camera );
 
 

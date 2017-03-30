@@ -1,0 +1,17 @@
+{
+  "name": "inXile-game",
+  "version": "0.0.1",
+  "description": "JS game using THREEJS",
+  "scripts": {
+    "start": "simplehttpserver"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rolling-scopes-school/inXile-game-team.git"
+  },
+  "author": "inXile-team",
+  "license": "ISC",
+  "dependencies": {
+    "simplehttpserver": "^0.0.6"
+  }
+}
