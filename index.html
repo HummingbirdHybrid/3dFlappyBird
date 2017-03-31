@@ -7,6 +7,8 @@
     <script src="vendor/three.js/build/three.min.js"></script>
     <script src="vendor/three.js/build/WebglSupport.js"></script>
     <script src="vendor/three.js/build/OrbitControls.js"></script>
+    <script src="vendor/physijs/physi.js"></script>
+    <script src="vendor/physijs/physijs_worker.js"></script>
     <style>
         body {
             margin: 0;
@@ -17,7 +19,7 @@
 </head>
 <body>
 <script>
-
+    Physijs.scripts.worker = 'vendor/physijs/physijs_worker.js';
     var scene, camera, renderer;
     var geometry, material;
     var plane,skySphere,persona,obsticle1,obsticle2;
@@ -29,15 +31,18 @@
         var warning = Detector.getWebGLErrorMessage();
         document.body.appendChild(warning);
     }
-
+   var controls;
     function init() {
 
-        scene = new THREE.Scene();
+        scene = new Physijs.Scene();
+        scene.setGravity(new THREE.Vector3( 0,-250, 0 ));
+
 
         camera = new THREE.PerspectiveCamera( 75, window.outerWidth / window.outerHeight, 0.1, 10000 );
         camera.position.z = 500;
 
-        var controls = new THREE.OrbitControls(camera);
+        controls = new THREE.OrbitControls(camera);
+
 
         var  galaxyTexture	= THREE.ImageUtils.loadTexture('resources/galaxy_starfield.png');
         material	= new THREE.MeshBasicMaterial({
@@ -52,22 +57,23 @@
         light = new THREE.PointLight(0xFFFF00);
         light.position.set(100, 0, 250);
         scene.add(light);
-
-        geometry = new THREE.PlaneGeometry( window.innerWidth, window.innerHeight , 10, 10 );
+        //#TODO:background texture
+       /* geometry = new THREE.PlaneGeometry( window.innerWidth, window.innerHeight , 10, 10 );
         material = new THREE.MeshLambertMaterial(
             {
                 color: 0x4BD121
             });
         plane = new THREE.Mesh(geometry,material);
 
-        scene.add( plane );
+        scene.add( plane );*/
 
         geometry = new THREE.CubeGeometry(100,100,100);
         material = new THREE.MeshLambertMaterial({
-            color: 'red',
-            wireframe: true
+            color: 'white',
+           // wireframe: true
         });
-        persona = new THREE.Mesh(geometry,material);
+
+        persona = new Physijs.BoxMesh(geometry,material);
         persona.position.z=60;
         persona.position.x=-400;
         scene.add(persona);
@@ -75,18 +81,18 @@
         geometry = new THREE.CubeGeometry(100,900,100);
         material = new THREE.MeshLambertMaterial(
             {
-                color:'black',
+                color:'red',
 
             }
         );
         obsticle1 = new THREE.Mesh(geometry,material);
-        obsticle1.position.y=plane.geometry.parameters.height/2;
+        obsticle1.position.y=window.innerHeight/2;
         obsticle1.position.z = 50;
         scene.add(obsticle1);
 
         obsticle2 = new THREE.Mesh(geometry,material);
-        obsticle2.position.y=-plane.geometry.parameters.height/2;
-        obsticle2.position.x=plane.geometry.parameters.width/2;
+        obsticle2.position.y=-window.innerHeight/2;
+        obsticle2.position.x=window.innerWidth/2;
         obsticle2.position.z = 50;
         scene.add(obsticle2);
 
@@ -94,9 +100,8 @@
         window.addEventListener('resize', function(){
             renderer.setSize( window.innerWidth, window.innerHeight );
             camera.aspect	= window.innerWidth / window.innerHeight;
-
             camera.updateProjectionMatrix()
-        }, false)
+        }, false);
 
         renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize( window.innerWidth, window.innerHeight );
@@ -108,23 +113,19 @@
     }
 
     window.addEventListener('keydown',function () {
-        persona.position.y+=5;
+      //  persona.position.y+=50;
+        persona.setAngularVelocity({x: 0, y: 0, z: 0});
+        var effect = new THREE.Vector3(0,350,0);
+        persona.setLinearVelocity(effect);
     });
 
     function animate() {
-
+    //#TODO: collision detection, falling out of area @by niowa
         requestAnimationFrame( animate );
-
-        camera.position.x+=sceneSpeed;
-        plane.position.x+=sceneSpeed;
-        light.position.x+=sceneSpeed;
-        skySphere.position.x+=sceneSpeed;
-        persona.position.y-=sceneSpeed;
-        persona.position.x+=sceneSpeed;
-
+        obsticle1.position.x-=sceneSpeed;
+        obsticle2.position.x-=sceneSpeed;
+        scene.simulate();
         renderer.render( scene, camera );
-
-
 
     }
 
