@@ -72,8 +72,11 @@
             color: 'white',
            // wireframe: true
         });
-
         persona = new Physijs.BoxMesh(geometry,material);
+
+        persona.addEventListener( 'collision', function( object ) {
+            console.log('hello');
+        });
         persona.position.z=60;
         persona.position.x=-400;
         scene.add(persona);
@@ -85,12 +88,12 @@
 
             }
         );
-        obsticle1 = new THREE.Mesh(geometry,material);
+        obsticle1 = new Physijs.Mesh(geometry,material);
         obsticle1.position.y=window.innerHeight/2;
         obsticle1.position.z = 50;
         scene.add(obsticle1);
 
-        obsticle2 = new THREE.Mesh(geometry,material);
+        obsticle2 = new Physijs.Mesh(geometry,material);
         obsticle2.position.y=-window.innerHeight/2;
         obsticle2.position.x=window.innerWidth/2;
         obsticle2.position.z = 50;
