@@ -9,6 +9,7 @@
     <script src="vendor/three.js/build/OrbitControls.js"></script>
     <script src="vendor/physijs/physi.js"></script>
     <script src="vendor/physijs/physijs_worker.js"></script>
+    <script src="vendor/game/game.js"></script>
     <style>
         body {
             margin: 0;
@@ -20,146 +21,12 @@
 <body>
 <script>
     Physijs.scripts.worker = 'vendor/physijs/physijs_worker.js';
-    var scene, camera, renderer;
-    var geometry, material;
-    var plane,skySphere,persona,obsticle1,obsticle2;
-    var sceneSpeed=1;
-    var isPaused = false;
     if (Detector.webgl) {
-            init();
-            animate();
+        window.game=game.core();
+        game.init();
     } else {
         var warning = Detector.getWebGLErrorMessage();
         document.body.appendChild(warning);
-    }
-   var controls;
-    function init() {
-        scene = new Physijs.Scene();
-        scene.setGravity(new THREE.Vector3( 0,-250, 0 ));
-        camera = new THREE.PerspectiveCamera( 75, window.outerWidth / window.outerHeight, 0.1, 10000 );
-        camera.position.z = 500;
-        controls = new THREE.OrbitControls(camera);
-        var  galaxyTexture	= THREE.ImageUtils.loadTexture('resources/galaxy_starfield.png');
-        material	= new THREE.MeshBasicMaterial({
-            map	: galaxyTexture,
-            side	: THREE.BackSide,
-            color	: 0x808080,
-        });
-         geometry	= new THREE.SphereGeometry(9000, 32, 32);
-         skySphere	= new THREE.Mesh(geometry, material);
-         scene.add(skySphere);
-        light = new THREE.PointLight(0xFFFF00);
-        light.position.set(100, 0, 250);
-        scene.add(light);
-
-        geometry = new THREE.CubeGeometry(100,100,100);
-
-        material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
-            color: 'white',
-            // wireframe: true
-        }),.8,.3);
-
-
-        persona = new Physijs.BoxMesh(geometry,material);
-       var  handleCollision = function( collided_with, linearVelocity, angularVelocity ) {
-           switch (++this.collisions) {
-
-               case 1:
-                   this.material.color.setHex(0xcc8855);
-                   break;
-
-               case 2:
-                   this.material.color.setHex(0xbb9955);
-                   break;
-
-               case 3:
-                   this.material.color.setHex(0xaaaa55);
-                   break;
-
-               case 4:
-                   this.material.color.setHex(0x99bb55);
-                   break;
-
-               case 5:
-                   this.material.color.setHex(0x88cc55);
-                   break;
-
-
-               case 6:
-                   this.material.color.setHex(0x77dd55);
-                   break;
-           }
-       };
-       persona.collisions=0;
-
-        persona.addEventListener( 'collision', function functionName() {
-          gameOver();
-        });
-        persona.position.z=60;
-        persona.position.x=-400;
-        scene.add(persona);
-        geometry = new THREE.CubeGeometry(100,900,100);
-        material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
-            color: 'white',
-            // wireframe: true
-        }),.8,.3);
-
-        obsticle1 = new Physijs.BoxMesh(geometry,material,0);
-        obsticle1.position.y=window.innerHeight/2;
-        obsticle1.position.z = 50;
-        scene.add(obsticle1);
-
-        obsticle2 = new Physijs.BoxMesh(geometry,material,0);
-        obsticle2.position.y=-window.innerHeight/2;
-        obsticle2.position.x=window.innerWidth/2-25;
-        obsticle2.position.z = 50;
-        scene.add(obsticle2);
-        window.addEventListener('resize', function(){
-            renderer.setSize( window.innerWidth, window.innerHeight );
-            camera.aspect	= window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix()
-        }, false);
-        renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize( window.innerWidth, window.innerHeight );
-        document.body.appendChild( renderer.domElement );
-    }
-    window.addEventListener('keydown',function () {
-      //  persona.position.y+=50;
-        persona.setAngularVelocity({x: 0, y: 0, z: 0});
-        var effect = new THREE.Vector3(0,350,0);
-        persona.setLinearVelocity(effect);
-    });
-
-    function gameOver() {
-      isPaused = true;
-      alert("GAME OVER");
-    }
-
-    function outOfBound() {
-      if (persona.position.y < -(window.innerWidth / 2 + 50) || persona.position.y > window.innerWidth / 2 + 50)  gameOver();
-    }
-
-    function animate() {
-    //#TODO: collision detection, falling out of area @by niowa
-        requestAnimationFrame( animate );
-
-        //var osition=obsticle1.getLinearVelocity();
-        obsticle1.__dirtyPosition = true;
-        obsticle2.__dirtyPosition = true;
-        obsticle1.position.x-=sceneSpeed;
-      //  obsticle1.setLinearVelocity(new THREE.Vector3(position.x-sceneSpeed,0,0,-100000));
-        obsticle2.position.x-=sceneSpeed;
-
-        outOfBound();
-        if (!isPaused) {
-          scene.simulate();
-          renderer.render( scene, camera );
-        } else {
-          renderer.render();
-          document.location.reload();
-        }
-
-
     }
 </script>
 </body>

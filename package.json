@@ -1,6 +1,6 @@
 {
   "name": "inXile-game",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "JS game using THREEJS",
   "scripts": {
     "start": "simplehttpserver"
