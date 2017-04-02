@@ -1,4 +1,5 @@
-window.Physijs = (function() {
+
+module.exports = function (THREE) {
     'use strict';
 
     var SUPPORT_TRANSFERABLE,
@@ -1400,4 +1401,4 @@ window.Physijs = (function() {
     };
 
     return Physijs;
-})();
+};
