@@ -1,17 +1,23 @@
-Physijs.scripts.worker = 'vendor/physijs/physijs_worker.js';
+
 window.game = window.game || {};
+var THREE = require('three');
+var OrbitControls = require('three-orbit-controls')(THREE);
+var Physijs = require('../vendor/physijs/physi.js')(THREE);//unable to use physijs or webpack-physijs npm modules
+Physijs.scripts.worker = 'vendor/physijs/physijs_worker.js';//unavoidable nail
+
+
 window.game.core = function (component) {
-    window = window || global;
-    window.scene = new Physijs.Scene();
-    window.camera = new THREE.PerspectiveCamera( 75, 1600 / 900, 0.1, 10000 );
+    var scene = new Physijs.Scene();
+    var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 10000 );
+    controls = new OrbitControls(camera);
     var renderer = new THREE.WebGLRenderer({ antialias: true });
     var isPaused = false;
     var sceneSpeed = 1 ;
     var _game = {
         init:function () {
-            _level.initWorld(1600,900);
+            _level.initWorld(window.innerWidth,window.innerHeight);
             _level.initPersona();
-            _level.initLVL(1600,900);
+            _level.initLVL(window.innerWidth,window.innerHeight);
             _game._loop();
         },
         _loop:function () {
@@ -42,7 +48,7 @@ window.game.core = function (component) {
             scene.setGravity(new THREE.Vector3( 0,-250, 0 ));
             camera.position.z = 500;
 
-            const controls = new THREE.OrbitControls(camera);
+
             const  galaxyTexture	= THREE.ImageUtils.loadTexture('resources/galaxy_starfield.png');
             let material	= new THREE.MeshBasicMaterial({
                 map	: galaxyTexture,
@@ -88,7 +94,7 @@ window.game.core = function (component) {
 
             //#TODO:niowa
             function spawnObsticles(gap) {
-                geometry = new THREE.CubeGeometry(100,900,100);
+                geometry = new THREE.CubeGeometry(100,window.innerHeight/2,100);
                 material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
                     color: 'white',
                     // wireframe: true
@@ -100,8 +106,8 @@ window.game.core = function (component) {
                 scene.add(obsticle1);
 
                 obsticle2 = new Physijs.BoxMesh(geometry,material,0);
-                obsticle2.position.y=-width/2;
-                obsticle2.position.x=width/2-25;
+                obsticle2.position.y=-height/2;
+                obsticle2.position.x=width/2+25;
                 obsticle2.position.z = 50;
                 scene.add(obsticle2);
             }

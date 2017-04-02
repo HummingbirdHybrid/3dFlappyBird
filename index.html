@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <title>Game Template</title>
-    <script src="vendor/three.js/build/three.min.js"></script>
-    <script src="vendor/three.js/build/WebglSupport.js"></script>
-    <script src="vendor/three.js/build/OrbitControls.js"></script>
-    <script src="vendor/physijs/physi.js"></script>
-    <script src="vendor/physijs/physijs_worker.js"></script>
-    <script src="vendor/game/game.js"></script>
+
+    <script src="vendor/WebGL/WebglSupport.js"></script>
+
+
+    <script src="build/bundle.js"></script>
     <style>
         body {
             margin: 0;
@@ -20,7 +19,7 @@
 </head>
 <body>
 <script>
-    Physijs.scripts.worker = 'vendor/physijs/physijs_worker.js';
+
     if (Detector.webgl) {
         window.game=game.core();
         game.init();
