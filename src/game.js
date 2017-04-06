@@ -99,7 +99,7 @@ window.game.core = function (component) {
         },
 
         initLVL:function (width,height) {
-          let distance = 400;
+          let distance = 430;
           for (let i = -1; i < 3; i++) {
             _level.spawnObsticles(300, distance * i);
           }
@@ -109,7 +109,8 @@ window.game.core = function (component) {
 
         },
         spawnObsticles: function (gap, distance = 0) {
-            const upperHeight = Math.random() * (window.innerHeight - gap - 100 - 100) + 100;
+            let obsticleUpper, obsticleLower;
+            const upperHeight = Math.random() * (window.innerHeight - gap - 200) + 100;
             const lowerPosition = window.innerHeight / 2 - upperHeight - gap;
             const lowerHeight = Math.abs(-window.innerHeight / 2 - lowerPosition);
 
@@ -134,9 +135,10 @@ window.game.core = function (component) {
             obsticleLower.position.y= lowerPosition - lowerHeight / 2 ;
             obsticleLower.position.z = 50;
             scene.add(obsticleLower);
+
             _level.setVectorSpeed(obsticleLower, effect, effect1);
 
-            obsticleUpper.together = obsticleLower;
+            obsticleUpper.lowerPart = obsticleLower;
         },
 
         setVectorSpeed: function (obj, vector1, vector2 = vector1) {
@@ -149,7 +151,7 @@ window.game.core = function (component) {
 
         deleteObsticles: function(obj) {
             scene.remove(obj);
-            scene.remove(obj.together);
+            scene.remove(obj.lowerPart);
         },
         _gameOver:function() {
         if (isPaused) return;
