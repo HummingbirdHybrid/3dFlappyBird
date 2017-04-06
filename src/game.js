@@ -7,20 +7,19 @@ Physijs.scripts.worker = 'vendor/physijs/physijs_worker.js';//unavoidable nail
 
 
 window.game.core = function (component) {
-    var obsticlesCount = true;
-    var first = true;
+    var persona;
     var KEYDOWN = 200;
     var scene = new Physijs.Scene();
     var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 10000 );
     controls = new OrbitControls(camera);
     var renderer = new THREE.WebGLRenderer({ antialias: true });
     var isPaused = false;
-    var sceneSpeed = 3 ;
+    var sceneSpeed = 1 ;
     var _game = {
         init:function () {
             _level.initWorld(window.innerWidth,window.innerHeight);
             _level.initPersona();
-            _level.initGO();
+            _level.initGenerationObsticles();
             _level.initLVL(window.innerWidth,window.innerHeight);
             _game._loop();
         },
@@ -64,7 +63,7 @@ window.game.core = function (component) {
                 color: 'white',
             }),.8,.3);
 
-            window.persona = new Physijs.BoxMesh(geometry,material);
+            persona = new Physijs.BoxMesh(geometry,material);
             persona.addEventListener( 'collision', function functionName() {
                 _level._gameOver();
             });
@@ -79,42 +78,34 @@ window.game.core = function (component) {
             });
         },
 
-        initGO: function () {
-            let geometry = new THREE.CubeGeometry(2,900,2);
+        initGenerationObsticles: function () {
+            let geometry = new THREE.CubeGeometry(0.1,900,0.1);
             let material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
-                color: 'white',
+                color: 'black',
             }),.8,.3);
 
-            window.invisibleLine = new Physijs.BoxMesh(geometry,material, 10000);
+            let invisibleLine = new Physijs.BoxMesh(geometry,material, 10000);
 
             invisibleLine.position.x = - window.innerHeight / 2 - 550;
             invisibleLine.position.z = 50;
             var effect = new THREE.Vector3(0,0,0);
-            var effect1 = new THREE.Vector3(0,0,0);
             invisibleLine.addEventListener( 'collision', function functionName(obj) {
               _level.deleteObsticles(obj);
               _level.spawnObsticles(300);
             });
 
-
             scene.add(invisibleLine);
-            invisibleLine.setAngularFactor(effect);
-            invisibleLine.setLinearFactor(effect);
-            invisibleLine.setLinearVelocity(effect1);
-            invisibleLine.setAngularVelocity(effect);
-
+            _level.setVectorSpeed(invisibleLine, effect);
         },
 
         initLVL:function (width,height) {
+          let distance = 400;
           for (let i = -1; i < 3; i++) {
-            _level.spawnObsticles(300, 400 * i);
+            _level.spawnObsticles(300, distance * i);
           }
 
-
-            renderer.setSize( window.innerWidth, window.innerHeight );
-            document.body.appendChild( renderer.domElement );
-
-            //#TODO:niowa
+          renderer.setSize( window.innerWidth, window.innerHeight );
+          document.body.appendChild( renderer.domElement );
 
         },
         spawnObsticles: function (gap, distance = 0) {
@@ -135,26 +126,24 @@ window.game.core = function (component) {
             var effect = new THREE.Vector3(0,0,0);
             var effect1 = new THREE.Vector3(-200,0,0);
             scene.add(obsticleUpper);
-            obsticleUpper.setAngularFactor(effect);
-            obsticleUpper.setLinearFactor(effect);
-            obsticleUpper.setLinearVelocity(effect1);
-            obsticleUpper.setAngularVelocity(effect);
+            _level.setVectorSpeed(obsticleUpper, effect, effect1);
 
             geometry = new THREE.CubeGeometry(100, lowerHeight, 100);
             obsticleLower = new Physijs.BoxMesh(geometry,material);
             obsticleLower.position.x = window.innerWidth / 2 + 200 + distance;
             obsticleLower.position.y= lowerPosition - lowerHeight / 2 ;
             obsticleLower.position.z = 50;
-            var effect = new THREE.Vector3(0,0,0);
-            var effect1 = new THREE.Vector3(-200,0,0);
             scene.add(obsticleLower);
-            obsticleLower.setAngularFactor(effect);
-            obsticleLower.setLinearFactor(effect);
-            obsticleLower.setLinearVelocity(effect1);
-            obsticleLower.setAngularVelocity(effect);
+            _level.setVectorSpeed(obsticleLower, effect, effect1);
 
             obsticleUpper.together = obsticleLower;
+        },
 
+        setVectorSpeed: function (obj, vector1, vector2 = vector1) {
+          obj.setAngularFactor(vector1);
+          obj.setLinearFactor(vector1);
+          obj.setLinearVelocity(vector2);
+          obj.setAngularVelocity(vector1);
         },
 
 
