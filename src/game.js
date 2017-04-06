@@ -19,14 +19,18 @@ window.game.core = function (component) {
         init:function () {
             _level.initWorld(window.innerWidth,window.innerHeight);
             _level.initPersona();
-            _level.initGenerationObsticles();
             _level.initLVL(window.innerWidth,window.innerHeight);
             _game._loop();
         },
         _loop:function () {
+
+            function outOfBound(width,height) {
+              if (persona.position.y < -(height / 2 - 150) || persona.position.y > height / 2 - 150)  _level._gameOver();
+            }
+
             requestAnimationFrame( _game._loop );
 
-            _level._outOfBound(1600,900);
+            outOfBound(1600,900);
             if (!isPaused) {
                 scene.simulate();
                 renderer.render( scene, camera );
@@ -78,39 +82,36 @@ window.game.core = function (component) {
             });
         },
 
-        initGenerationObsticles: function () {
-            let geometry = new THREE.CubeGeometry(0.1,900,0.1);
+        initLVL:function (width,height) {
+          _level.spawnObsticles();
+          renderer.setSize( window.innerWidth, window.innerHeight );
+          document.body.appendChild( renderer.domElement );
+
+        },
+        spawnObsticles: function () {
+          function setInvisibleLine() {
+            let geometry = new THREE.CubeGeometry(0.1,window.innerHeight,0.1);
             let material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
                 color: 'black',
             }),.8,.3);
 
-            let invisibleLine = new Physijs.BoxMesh(geometry,material, 10000);
+            let invisibleLine = new Physijs.BoxMesh(geometry,material);
 
             invisibleLine.position.x = - window.innerHeight / 2 - 550;
             invisibleLine.position.z = 50;
             var effect = new THREE.Vector3(0,0,0);
             invisibleLine.addEventListener( 'collision', function functionName(obj) {
-              _level.deleteObsticles(obj);
-              _level.spawnObsticles(300);
+              deleteObsticles(obj);
+              setObsticles(300);
             });
 
             scene.add(invisibleLine);
             _level.setVectorSpeed(invisibleLine, effect);
-        },
+          };
 
-        initLVL:function (width,height) {
-          let distance = 430;
-          for (let i = -1; i < 3; i++) {
-            _level.spawnObsticles(300, distance * i);
-          }
-
-          renderer.setSize( window.innerWidth, window.innerHeight );
-          document.body.appendChild( renderer.domElement );
-
-        },
-        spawnObsticles: function (gap, distance = 0) {
+          function setObsticles(gap, distance = 0) {
             let obsticleUpper, obsticleLower;
-            const upperHeight = Math.random() * (window.innerHeight - gap - 200) + 100;
+            const upperHeight = Math.random() * (window.innerHeight - gap);
             const lowerPosition = window.innerHeight / 2 - upperHeight - gap;
             const lowerHeight = Math.abs(-window.innerHeight / 2 - lowerPosition);
 
@@ -137,8 +138,21 @@ window.game.core = function (component) {
             scene.add(obsticleLower);
 
             _level.setVectorSpeed(obsticleLower, effect, effect1);
-
             obsticleUpper.lowerPart = obsticleLower;
+          };
+
+          function deleteObsticles(obj) {
+              scene.remove(obj);
+              scene.remove(obj.lowerPart);
+          };
+
+          setInvisibleLine();
+
+          let distance = 420;
+          for (let i = -1; i < 3; i++) {
+            setObsticles(300, distance * i);
+          }
+
         },
 
         setVectorSpeed: function (obj, vector1, vector2 = vector1) {
@@ -148,20 +162,12 @@ window.game.core = function (component) {
           obj.setAngularVelocity(vector1);
         },
 
-
-        deleteObsticles: function(obj) {
-            scene.remove(obj);
-            scene.remove(obj.lowerPart);
-        },
         _gameOver:function() {
         if (isPaused) return;
         isPaused = true;
         alert("GAME OVER");
-         },
+         }
 
-        _outOfBound:function (width,height) {
-        if (persona.position.y < -(height / 2 - 150) || persona.position.y > height / 2 - 150)  _level._gameOver();
-    }
     };
     window.addEventListener('resize', function(){
         renderer.setSize( window.innerWidth, window.innerHeight );
