@@ -3,34 +3,38 @@ window.game = window.game || {};
 var THREE = require('three');
 var OrbitControls = require('three-orbit-controls')(THREE);
 var Physijs = require('../vendor/physijs/physi.js')(THREE);//unable to use physijs or webpack-physijs npm modules
+var STLLoader = require('three-stl-loader')(THREE);
+var loader = new STLLoader();
 Physijs.scripts.worker = 'vendor/physijs/physijs_worker.js';//unavoidable nail
 
 
-window.game.core = function (component) {
-    var persona;
-    var KEYDOWN = 200;
+game.core = function () {
+    var jumpForce = 300;
+    var sceneSpeed = 1 ;
     var scene = new Physijs.Scene();
     var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 10000 );
-    controls = new OrbitControls(camera);
-    var renderer = new THREE.WebGLRenderer({ antialias: true });
+    var controls = new OrbitControls(camera);
+    var container = document.querySelector('#gameContainer');
+    var gameArea = document.querySelector('#gameArea');
+    var renderer = new THREE.WebGLRenderer({ antialias: true, canvas: gameArea });
+    var sceneWidth = gameArea.offsetWidth, sceneHeight = gameArea.offsetHeight;
     var isPaused = false;
-    var sceneSpeed = 1 ;
     var _game = {
         init:function () {
-            _level.initWorld(window.innerWidth,window.innerHeight);
+            _level.initWorld(sceneWidth,sceneHeight);
             _level.initPersona();
-            _level.initLVL(window.innerWidth,window.innerHeight);
+            _level.initLVL(sceneWidth,sceneHeight);
             _game._loop();
         },
         _loop:function () {
 
-            function outOfBound(width,height) {
-              if (persona.position.y < -(height / 2 - 150) || persona.position.y > height / 2 - 150)  _level._gameOver();
+            function outOfBound() {
+              if (game.persona.position.y < -(sceneHeight / 2 - 150) || game.persona.position.y > sceneHeight / 2 - 150)  _level._gameOver();
             }
 
             requestAnimationFrame( _game._loop );
 
-            outOfBound(1600,900);
+            outOfBound(sceneHeight);
             if (!isPaused) {
                 scene.simulate();
                 renderer.render( scene, camera );
@@ -44,8 +48,8 @@ window.game.core = function (component) {
 
 
     var _level = {
-        initWorld: function (width,height) {
-            scene.setGravity(new THREE.Vector3( 0,-250, 0 ));
+        initWorld: function () {
+            scene.setGravity(new THREE.Vector3( 0,-250+(-10*sceneSpeed), 0 ));
             camera.position.z = 500;
 
             const  galaxyTexture	= THREE.ImageUtils.loadTexture('resources/galaxy_starfield.png');
@@ -62,58 +66,58 @@ window.game.core = function (component) {
             scene.add(light);
         },
         initPersona: function () {
-            let geometry = new THREE.CubeGeometry(100,100,100);
-            let material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
-                color: 'white',
-            }),.8,.3);
+                    loader.load('resources/octocat.STL', function (geometry) {
+                        var material = new THREE.MeshNormalMaterial();
+                        game.persona = new Physijs.BoxMesh(geometry, material);
+                        game.persona.scale.set(0.5,0.5,0.5);
+                        game.persona.rotation.set(-1.5, 0, -1.5);
+                        game.persona.__dirtyRotation = true;
+                        game.persona.addEventListener( 'collision', function functionName() {
+                            _level._gameOver();
+                        });
+                        game.persona.position.z=game.persona.geometry.boundingBox.max.z/2;
+                        game.persona.position.x=-400;
+                        scene.add(game.persona);
 
-            persona = new Physijs.BoxMesh(geometry,material);
-            persona.addEventListener( 'collision', function functionName() {
-                _level._gameOver();
-            });
-            persona.position.z=60;
-            persona.position.x=-400;
-            scene.add(persona);
-
-            window.addEventListener('keydown',function () {
-                persona.setAngularVelocity({x: 0, y: 0, z: 0});
-                var effect = new THREE.Vector3(0,KEYDOWN,0);
-                persona.setLinearVelocity(effect);
-            });
+                        window.addEventListener('keydown',function () {
+                        game.persona.setAngularVelocity({x: 0, y: 0, z: 0});
+                        var effect = new THREE.Vector3(0,jumpForce,0);
+                        game.persona.setLinearVelocity(effect);
+                    })
+                });
+            return game.persona;
         },
 
         initLVL:function (width,height) {
           _level.spawnObsticles();
-          renderer.setSize( window.innerWidth, window.innerHeight );
-          document.body.appendChild( renderer.domElement );
-
+          renderer.setSize( width, height );
         },
         spawnObsticles: function () {
           function setInvisibleLine() {
-            let geometry = new THREE.CubeGeometry(0.1,window.innerHeight,0.1);
+            let geometry = new THREE.CubeGeometry(0.1,sceneHeight,0.1);
             let material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
                 color: 'black',
             }),.8,.3);
 
             let invisibleLine = new Physijs.BoxMesh(geometry,material);
 
-            invisibleLine.position.x = - window.innerHeight / 2 - 550;
-            invisibleLine.position.z = 50;
+            invisibleLine.position.x = - sceneWidth/2-100;
+            invisibleLine.position.z = invisibleLine.geometry.boundingBox.max.z/2;
             var effect = new THREE.Vector3(0,0,0);
             invisibleLine.addEventListener( 'collision', function functionName(obj) {
-              deleteObsticles(obj);
-              setObsticles(300);
+              deleteObstacles(obj);
+              setObstacles(300);
             });
 
             scene.add(invisibleLine);
             _level.setVectorSpeed(invisibleLine, effect);
           };
 
-          function setObsticles(gap, distance = 0) {
-            let obsticleUpper, obsticleLower;
-            const upperHeight = Math.random() * (window.innerHeight - gap);
-            const lowerPosition = window.innerHeight / 2 - upperHeight - gap;
-            const lowerHeight = Math.abs(-window.innerHeight / 2 - lowerPosition);
+          function setObstacles(gap, distance = 0) {
+            let obstaclesUpper, obstaclesLower;
+            const upperHeight = Math.random() * (sceneHeight - gap);
+            const lowerPosition = sceneHeight / 2 - upperHeight - gap;
+            const lowerHeight = Math.abs(-sceneHeight / 2 - lowerPosition);
 
             geometry = new THREE.CubeGeometry(100, upperHeight, 100);
             material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
@@ -121,27 +125,27 @@ window.game.core = function (component) {
                 // wireframe: true
             }),.8,.3);
 
-            obsticleUpper = new Physijs.BoxMesh(geometry,material);
-            obsticleUpper.position.x = window.innerWidth / 2 + 200 + distance;
-            obsticleUpper.position.y= window.innerHeight/2 - (upperHeight / 2);
-            obsticleUpper.position.z = 50;
+            obstaclesUpper = new Physijs.BoxMesh(geometry,material);
+            obstaclesUpper.position.x = sceneWidth / 2 + 200 + distance;
+            obstaclesUpper.position.y= sceneHeight/2 - (upperHeight / 2);
+            obstaclesUpper.position.z = 50;
             var effect = new THREE.Vector3(0,0,0);
             var effect1 = new THREE.Vector3(-200,0,0);
-            scene.add(obsticleUpper);
-            _level.setVectorSpeed(obsticleUpper, effect, effect1);
+            scene.add(obstaclesUpper);
+            _level.setVectorSpeed(obstaclesUpper, effect, effect1);
 
             geometry = new THREE.CubeGeometry(100, lowerHeight, 100);
-            obsticleLower = new Physijs.BoxMesh(geometry,material);
-            obsticleLower.position.x = window.innerWidth / 2 + 200 + distance;
-            obsticleLower.position.y= lowerPosition - lowerHeight / 2 ;
-            obsticleLower.position.z = 50;
-            scene.add(obsticleLower);
+            obstaclesLower = new Physijs.BoxMesh(geometry,material);
+            obstaclesLower.position.x = sceneWidth / 2 + 200 + distance;
+            obstaclesLower.position.y= lowerPosition - lowerHeight / 2 ;
+            obstaclesLower.position.z = 50;
+            scene.add(obstaclesLower);
 
-            _level.setVectorSpeed(obsticleLower, effect, effect1);
-            obsticleUpper.lowerPart = obsticleLower;
+            _level.setVectorSpeed(obstaclesLower, effect, effect1);
+            obstaclesUpper.lowerPart = obstaclesLower;
           };
 
-          function deleteObsticles(obj) {
+          function deleteObstacles(obj) {
               scene.remove(obj);
               scene.remove(obj.lowerPart);
           };
@@ -150,7 +154,7 @@ window.game.core = function (component) {
 
           let distance = 420;
           for (let i = -1; i < 3; i++) {
-            setObsticles(300, distance * i);
+            setObstacles(400, distance * i);
           }
 
         },
@@ -170,8 +174,8 @@ window.game.core = function (component) {
 
     };
     window.addEventListener('resize', function(){
-        renderer.setSize( window.innerWidth, window.innerHeight );
-        camera.aspect	= window.innerWidth / window.innerHeight;
+        renderer.setSize( sceneWidth, sceneHeight );
+        camera.aspect	= sceneWidth / sceneHeight;
         camera.updateProjectionMatrix()
     }, false);
     return _game;
