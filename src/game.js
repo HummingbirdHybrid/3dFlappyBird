@@ -21,18 +21,19 @@ game.core = function () {
     var isPaused = false;
     var _game = {
         init:function () {
+            _game._runEngine();
             _level.initWorld(sceneWidth,sceneHeight);
             _level.initPersona();
             _level.initLVL(sceneWidth,sceneHeight);
-            _game._loop();
+
         },
-        _loop:function () {
+        _runEngine:function () {
 
             function outOfBound() {
-              if (game.persona.position.y < -(sceneHeight / 2 - 150) || game.persona.position.y > sceneHeight / 2 - 150)  _level._gameOver();
+          //    if (game.persona.position.y < -(sceneHeight / 2 - 150) || game.persona.position.y > sceneHeight / 2 - 150)  _level._gameOver();
             }
 
-            requestAnimationFrame( _game._loop );
+            requestAnimationFrame( _game._runEngine );
 
             outOfBound(sceneHeight);
             if (!isPaused) {
@@ -49,6 +50,7 @@ game.core = function () {
 
     var _level = {
         initWorld: function () {
+            renderer.setSize( sceneWidth, sceneHeight );
             scene.setGravity(new THREE.Vector3( 0,-250+(-10*sceneSpeed), 0 ));
             camera.position.z = 500;
 
@@ -64,12 +66,13 @@ game.core = function () {
             const light = new THREE.PointLight(0xFFFF00);
             light.position.set(100, 0, 250);
             scene.add(light);
+            renderer.render(scene,camera);
         },
         initPersona: function () {
                     loader.load('resources/octocat.STL', function (geometry) {
                         var material = new THREE.MeshNormalMaterial();
-                        game.persona = new Physijs.BoxMesh(geometry, material);
-                        game.persona.scale.set(0.5,0.5,0.5);
+                        game.persona = new Physijs.CylinderMesh(geometry, material);
+
                         game.persona.rotation.set(-1.5, 0, -1.5);
                         game.persona.__dirtyRotation = true;
                         game.persona.addEventListener( 'collision', function functionName() {
@@ -88,11 +91,11 @@ game.core = function () {
             return game.persona;
         },
 
-        initLVL:function (width,height) {
-          _level.spawnObsticles();
-          renderer.setSize( width, height );
+        initLVL:function () {
+          _level.spawnObstacles();
+
         },
-        spawnObsticles: function () {
+        spawnObstacles: function () {
           function setInvisibleLine() {
             let geometry = new THREE.CubeGeometry(0.1,sceneHeight,0.1);
             let material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
