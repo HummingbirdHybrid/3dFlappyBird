@@ -4,12 +4,13 @@ var THREE = require('three');
 var OrbitControls = require('three-orbit-controls')(THREE);
 var Physijs = require('../vendor/physijs/physi.js')(THREE);//unable to use physijs or webpack-physijs npm modules
 var STLLoader = require('three-stl-loader')(THREE);
+var music = require('../src/musicControl');
 var loader = new STLLoader();
 Physijs.scripts.worker = 'vendor/physijs/physijs_worker.js';//unavoidable nail
 
 
 game.core = function () {
-    var jumpForce = 300;
+    var jumpForce = 300; ////////////////////
     var sceneSpeed = 1 ;
     var score = 0;
     var scene = new Physijs.Scene();
@@ -42,7 +43,9 @@ game.core = function () {
                 renderer.render( scene, camera );
             } else {
                 renderer.render();
-                document.location.reload();
+                setTimeout(function () {
+                    document.location.reload();
+                }, 4000);
             }
 
         }
@@ -76,8 +79,8 @@ game.core = function () {
 
                         game.persona.rotation.set(-1.5, 0, -1.5);
                         game.persona.__dirtyRotation = true;
-                        game.persona.addEventListener( 'collision', function functionName() {
-                            _level._gameOver();
+                        game.persona.addEventListener( 'collision', function functionName(obj) {
+                            if (obj.typeObject != 'line') _level._gameOver();
                         });
                         game.persona.position.z=game.persona.geometry.boundingBox.max.z/2;
                         game.persona.position.x=-400;
@@ -94,6 +97,9 @@ game.core = function () {
 
         initLVL:function () {
           _level.spawnObstacles();
+          music = music.music;
+          music.initializeSound();
+          music.playSound(music.soundTrack);
 
         },
         spawnObstacles: function () {
@@ -124,17 +130,20 @@ game.core = function () {
                   // wireframe: true
               }),.8,.3);
 
-              let scoreLine = new Physijs.BoxMesh(geometry,material);
+              let scoreLine = new Physijs.CylinderMesh(geometry,material);
               scoreLine.position.x = positionX;
               scoreLine.position.y = positionY;
               scoreLine.position.z = 50;
               scoreLine.addEventListener( 'collision', function functionName() {
+                music.playSound(music.soundEffect);
                 score++;
                 deleteObstacles(scoreLine);
               });
               scene.add(scoreLine);
-              console.log(vector1);
               _level.setVectorSpeed(scoreLine, vector1, vector2);
+              scoreLine.typeObject = "line";
+
+              console.log(scoreLine);
           };
 
           function setObstacles(gap, distance = 0) {
@@ -168,7 +177,11 @@ game.core = function () {
             _level.setVectorSpeed(obstaclesLower, effect, effect1);
             obstaclesUpper.lowerPart = obstaclesLower;
 
-            setScoreLine(gap, obstaclesUpper.position.x, sceneHeight/2 - upperHeight - 10 - gap/2, effect, effect1);
+            let positionX = obstaclesUpper.position.x + 50 + 134;
+            let positionY = sceneHeight/2 - upperHeight - 10 - gap/2;
+
+            setScoreLine(gap, positionX, positionY, effect, effect1);
+
           };
 
           function deleteObstacles(obj) {
@@ -180,7 +193,7 @@ game.core = function () {
 
           let distance = 420;
           for (let i = -1; i < 3; i++) {
-            setObstacles(400, distance * i);
+            setObstacles(300, distance * i);
           }
 
         },
@@ -193,11 +206,16 @@ game.core = function () {
         },
 
         _gameOver:function() {
-        if (isPaused) return;
+        music.pauseSound(music.soundTrack);
+        music.playSound(music.soundGameOver);
+
         isPaused = true;
-        alert("GAME OVER");
-        alert(`Your score ${score}`);
-         }
+        setTimeout(function end() {
+            alert("GAME OVER");
+            alert(`Your score ${score}`);
+        }, 4000);
+
+        }
 
     };
     window.addEventListener('resize', function(){
