@@ -11,6 +11,7 @@ Physijs.scripts.worker = 'vendor/physijs/physijs_worker.js';//unavoidable nail
 game.core = function () {
     var jumpForce = 300;
     var sceneSpeed = 1 ;
+    var score = 0;
     var scene = new Physijs.Scene();
     var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 10000 );
     var controls = new OrbitControls(camera);
@@ -116,6 +117,26 @@ game.core = function () {
             _level.setVectorSpeed(invisibleLine, effect);
           };
 
+          function setScoreLine(gap, positionX, positionY, vector1, vector2) {
+              geometry = new THREE.CubeGeometry(0.01, gap - 50, 0.01);
+              material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
+                  color: 'black',
+                  // wireframe: true
+              }),.8,.3);
+
+              let scoreLine = new Physijs.BoxMesh(geometry,material);
+              scoreLine.position.x = positionX;
+              scoreLine.position.y = positionY;
+              scoreLine.position.z = 50;
+              scoreLine.addEventListener( 'collision', function functionName() {
+                score++;
+                deleteObstacles(scoreLine);
+              });
+              scene.add(scoreLine);
+              console.log(vector1);
+              _level.setVectorSpeed(scoreLine, vector1, vector2);
+          };
+
           function setObstacles(gap, distance = 0) {
             let obstaclesUpper, obstaclesLower;
             const upperHeight = Math.random() * (sceneHeight - gap);
@@ -146,6 +167,8 @@ game.core = function () {
 
             _level.setVectorSpeed(obstaclesLower, effect, effect1);
             obstaclesUpper.lowerPart = obstaclesLower;
+
+            setScoreLine(gap, obstaclesUpper.position.x, sceneHeight/2 - upperHeight - 10 - gap/2, effect, effect1);
           };
 
           function deleteObstacles(obj) {
@@ -173,6 +196,7 @@ game.core = function () {
         if (isPaused) return;
         isPaused = true;
         alert("GAME OVER");
+        alert(`Your score ${score}`);
          }
 
     };
