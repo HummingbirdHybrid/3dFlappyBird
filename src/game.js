@@ -4,7 +4,7 @@ var THREE = require('three');
 var OrbitControls = require('three-orbit-controls')(THREE);
 var Physijs = require('../vendor/physijs/physi.js')(THREE);//unable to use physijs or webpack-physijs npm modules
 var STLLoader = require('three-stl-loader')(THREE);
-var Music = require('../src/musicControl');
+var Music = require('../vendor/music/musicControl');
 var loader = new STLLoader();
 Physijs.scripts.worker = 'vendor/physijs/physijs_worker.js';//unavoidable nail
 
@@ -46,9 +46,7 @@ game.core = function () {
 
             } else {
 				
-				alert("ju")
-
-                var to_remove = [];
+				var to_remove = [];
 
                 scene.traverse ( function( child ) {
                     if ( child instanceof THREE.Mesh &&!child.userData.keepMe === true ) {
@@ -62,10 +60,18 @@ game.core = function () {
                // _level.initWorld(sceneWidth,sceneHeight);
                 //_level.initPersona();
                 scene.remove(game.persona);
+				game.persona.position.y = 0;
+				
                 scene.add(game.persona);
-				isPaused=false;
-                _level.initLVL(sceneWidth,sceneHeight);
-                
+				
+				_level.initLVL(sceneWidth,sceneHeight);
+				scene.onSimulationResume();
+				isPaused = false;
+				
+				score = 0;
+				music.pauseSound(music.soundGameOver);
+				music.loadSound();
+				             
             }
 
         }
@@ -166,7 +172,6 @@ game.core = function () {
               _level.setVectorSpeed(scoreLine, vector1, vector2);
               scoreLine.typeObject = "line";
 
-              console.log(scoreLine);
           };
 
           function setObstacles(gap, distance = 0) {
@@ -233,10 +238,9 @@ game.core = function () {
         music.playSound(music.soundGameOver);
 
         isPaused = true;
-            alert("GAME OVER");
-            alert(`Your score ${score}`);
-
-
+		alert("GAME OVER");
+        alert(`Your score ${score}`);
+            
         }
 
     };
