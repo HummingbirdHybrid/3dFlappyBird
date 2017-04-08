@@ -4,13 +4,13 @@ var THREE = require('three');
 var OrbitControls = require('three-orbit-controls')(THREE);
 var Physijs = require('../vendor/physijs/physi.js')(THREE);//unable to use physijs or webpack-physijs npm modules
 var STLLoader = require('three-stl-loader')(THREE);
-var music = require('../src/musicControl');
+var Music = require('../vendor/music/musicControl');
 var loader = new STLLoader();
 Physijs.scripts.worker = 'vendor/physijs/physijs_worker.js';//unavoidable nail
 
 
 game.core = function () {
-    var jumpForce = 300; ////////////////////
+    var jumpForce = 300;
     var sceneSpeed = 1 ;
     var score = 0;
     var scene = new Physijs.Scene();
@@ -21,6 +21,7 @@ game.core = function () {
     var renderer = new THREE.WebGLRenderer({ antialias: true, canvas: gameArea });
     var sceneWidth = gameArea.offsetWidth, sceneHeight = gameArea.offsetHeight;
     var isPaused = false;
+	var music = Music.music();
     var _game = {
         init:function () {
             _game._runEngine();
@@ -44,8 +45,8 @@ game.core = function () {
                 renderer.render( scene, camera );
 
             } else {
-
-                var to_remove = [];
+				
+				var to_remove = [];
 
                 scene.traverse ( function( child ) {
                     if ( child instanceof THREE.Mesh &&!child.userData.keepMe === true ) {
@@ -59,9 +60,18 @@ game.core = function () {
                // _level.initWorld(sceneWidth,sceneHeight);
                 //_level.initPersona();
                 scene.remove(game.persona);
+				game.persona.position.y = 0;
+				
                 scene.add(game.persona);
-                _level.initLVL(sceneWidth,sceneHeight);
-                isPaused=false;
+				
+				_level.initLVL(sceneWidth,sceneHeight);
+				scene.onSimulationResume();
+				isPaused = false;
+				
+				score = 0;
+				music.pauseSound(music.soundGameOver);
+				music.loadSound();
+				             
             }
 
         }
@@ -117,7 +127,6 @@ game.core = function () {
 
         initLVL:function () {
           _level.spawnObstacles();
-          music = music.music;
           music.initializeSound();
           music.playSound(music.soundTrack);
 
@@ -163,7 +172,6 @@ game.core = function () {
               _level.setVectorSpeed(scoreLine, vector1, vector2);
               scoreLine.typeObject = "line";
 
-              console.log(scoreLine);
           };
 
           function setObstacles(gap, distance = 0) {
@@ -230,11 +238,9 @@ game.core = function () {
         music.playSound(music.soundGameOver);
 
         isPaused = true;
-        setTimeout(function end() {
-            alert("GAME OVER");
-            alert(`Your score ${score}`);
-        }, 4000);
-
+		alert("GAME OVER");
+        alert(`Your score ${score}`);
+            
         }
 
     };
