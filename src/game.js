@@ -38,14 +38,30 @@ game.core = function () {
             requestAnimationFrame( _game._runEngine );
 
             outOfBound(sceneHeight);
+
             if (!isPaused) {
                 scene.simulate();
                 renderer.render( scene, camera );
+
             } else {
-                renderer.render();
-                setTimeout(function () {
-                    document.location.reload();
-                }, 4000);
+
+                var to_remove = [];
+
+                scene.traverse ( function( child ) {
+                    if ( child instanceof THREE.Mesh &&!child.userData.keepMe === true ) {
+                        to_remove.push( child );
+                    }
+                } );
+
+                for ( var i = 0; i < to_remove.length; i++ ) {
+                    scene.remove( to_remove[i] );
+                }
+               // _level.initWorld(sceneWidth,sceneHeight);
+                //_level.initPersona();
+                scene.remove(game.persona);
+                scene.add(game.persona);
+                _level.initLVL(sceneWidth,sceneHeight);
+                isPaused=false;
             }
 
         }
@@ -58,7 +74,7 @@ game.core = function () {
             scene.setGravity(new THREE.Vector3( 0,-250+(-10*sceneSpeed), 0 ));
             camera.position.z = 500;
 
-            const  galaxyTexture	= THREE.ImageUtils.loadTexture('resources/galaxy_starfield.png');
+            const  galaxyTexture = THREE.ImageUtils.loadTexture('resources/galaxy_starfield.png');
             let material	= new THREE.MeshBasicMaterial({
                 map	: galaxyTexture,
                 side	: THREE.BackSide,
@@ -66,9 +82,12 @@ game.core = function () {
             });
             let geometry	= new THREE.SphereGeometry(9000, 32, 32);
             let skySphere	= new THREE.Mesh(geometry, material);
+            skySphere.userData.keepMe = true;
             scene.add(skySphere);
+
             const light = new THREE.PointLight(0xFFFF00);
             light.position.set(100, 0, 250);
+            light.userData.keepMe=true;
             scene.add(light);
             renderer.render(scene,camera);
         },
@@ -84,6 +103,7 @@ game.core = function () {
                         });
                         game.persona.position.z=game.persona.geometry.boundingBox.max.z/2;
                         game.persona.position.x=-400;
+                        game.persona.userData.keepMe=true;
                         scene.add(game.persona);
 
                         window.addEventListener('keydown',function () {
