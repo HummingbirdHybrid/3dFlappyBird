@@ -11,7 +11,6 @@ Physijs.scripts.worker = 'vendor/physijs/physijs_worker.js';//unavoidable nail
 
 game.core = function () {
     var jumpForce = 300;
-    var sceneSpeed = 1 ;
     var score = 0;
     var scene = new Physijs.Scene();
     var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 10000 );
@@ -20,7 +19,7 @@ game.core = function () {
     var gameArea = document.querySelector('#gameArea');
     var renderer = new THREE.WebGLRenderer({ antialias: true, canvas: gameArea });
     var sceneWidth = gameArea.offsetWidth, sceneHeight = gameArea.offsetHeight;
-    var isPaused = false;
+    var isPaused = 'false';
 	var music = Music.music();
     var _game = {
         init:function () {
@@ -32,18 +31,14 @@ game.core = function () {
         },
         _runEngine:function () {
 
-            function outOfBound() {
-                if (game.persona.position.y < -(sceneHeight / 2 - 100) || game.persona.position.y > sceneHeight / 2 - 100)  _level._gameOver();
-            }
-
             requestAnimationFrame( _game._runEngine );
 
-            outOfBound(sceneHeight);
-
-            if (!isPaused) {
+            if (isPaused === 'false') {
                 scene.simulate();
                 renderer.render( scene, camera );
 
+            } else if (isPaused === 'waiting') {
+                render.render();
             } else {
                 var to_remove = [];
 
@@ -65,14 +60,12 @@ game.core = function () {
 
                 _level.initLVL(sceneWidth,sceneHeight);
                 scene.onSimulationResume();
-                isPaused = false;
+                isPaused = 'false';
 
                 score = 0;
                 music.pauseSound(music.soundGameOver);
                 music.loadSound();
                 music.playSound(music.soundTrack);
-                //setTimeout(function () {}, 4000);
-
             }
 
         }
@@ -81,8 +74,11 @@ game.core = function () {
 
     var _level = {
         initWorld: function () {
+            game.sceneSpeed = 1;
+            game.gap = 300;
+            game.distance = 300;
             renderer.setSize( sceneWidth, sceneHeight );
-            scene.setGravity(new THREE.Vector3( 0,-250+(-10*sceneSpeed), 0 ));
+            scene.setGravity(new THREE.Vector3( 0,-250+(-10*game.sceneSpeed), 0 ));
             camera.position.z = 500;
 
             const  galaxyTexture = THREE.ImageUtils.loadTexture('resources/galaxy_starfield.png');
@@ -166,7 +162,7 @@ game.core = function () {
               scoreLine.position.z = 0;
               scoreLine.addEventListener( 'collision', function functionName(obj) {
                   if (obj.typeObject === 'obstacle') {
-                      setObstacles(gap);
+                      setObstacles(game.gap);
                       obj.typeObject = 'passed';
                   }
 
@@ -243,17 +239,48 @@ game.core = function () {
 
           };
 
+          function setWalls() {
+              geometry = new THREE.CubeGeometry(sceneWidth, 0.01, 0.01);
+              material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
+                  color: 'black',
+              }),.8,.3);
+
+              let wallUpper = new Physijs.BoxMesh(geometry,material);
+              wallUpper.position.x = 0;
+              wallUpper.position.y = sceneHeight / 2;
+              wallUpper.position.z = 0;
+              let effect = new THREE.Vector3(0,0,0);
+              wallUpper.addEventListener( 'collision', function functionName(obj) {
+                  if (obj.typeObject == 'persona') _level._gameOver();
+              });
+
+              scene.add(wallUpper);
+              _level.setVectorSpeed(wallUpper, effect);
+              wallUpper.typeObject = 'wall';
+
+              let wallLower = new Physijs.BoxMesh(geometry,material);
+              wallLower.position.x = 0;
+              wallLower.position.y = - sceneHeight / 2;
+              wallLower.position.z = 0;
+              wallLower.addEventListener( 'collision', function functionName(obj) {
+                  if (obj.typeObject == 'persona') _level._gameOver();
+              });
+              scene.add(wallLower);
+
+              _level.setVectorSpeed(wallLower, effect);
+              wallLower.typeObject = 'wall';
+
+          }
+
           function deleteObstacles(obj) {
               scene.remove(obj);
               scene.remove(obj.lowerPart);
           };
 
-          let distance = 400;
-          let gap = 400;
-
           setDeletingLine();
-          setSpawnLine(distance);
-          setObstacles(gap, distance / 2);
+          setSpawnLine(game.distance);
+          setObstacles(game.gap, game.distance / 2);
+          setWalls();
 
         },
 
@@ -265,18 +292,18 @@ game.core = function () {
         },
 
         _gameOver:function() {
-        music.pauseSound(music.soundTrack);
-        music.playSound(music.soundGameOver);
-
-        isPaused = true;
-		alert("GAME OVER");
-        alert(`Your score ${score}`);
-
+            music.pauseSound(music.soundTrack);
+            music.playSound(music.soundGameOver);
+            setTimeout(function () {
+                isPaused = 'true';
+            }, 3000);
+            isPaused = 'waiting';
+    		alert("GAME OVER");
+            alert(`Your score ${score}`);
         }
-
     };
     window.addEventListener('resize', function(){
-        renderer.setSize( sceneWidth, sceneHeight );
+        renderer.setSize(sceneWidth, sceneHeight );
         camera.aspect	= sceneWidth / sceneHeight;
         camera.updateProjectionMatrix()
     }, false);
