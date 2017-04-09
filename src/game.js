@@ -24,16 +24,16 @@ game.core = function () {
 	var music = Music.music();
     var _game = {
         init:function () {
-            _game._runEngine();
+			_level.initPersona();
             _level.initWorld(sceneWidth,sceneHeight);
-            _level.initPersona();
             _level.initLVL(sceneWidth,sceneHeight);
+			_game._runEngine();
 
         },
         _runEngine:function () {
 
             function outOfBound() {
-          //    if (game.persona.position.y < -(sceneHeight / 2 - 150) || game.persona.position.y > sceneHeight / 2 - 150)  _level._gameOver();
+                if (game.persona.position.y < -(sceneHeight / 2 - 100) || game.persona.position.y > sceneHeight / 2 - 100)  _level._gameOver();
             }
 
             requestAnimationFrame( _game._runEngine );
@@ -45,8 +45,7 @@ game.core = function () {
                 renderer.render( scene, camera );
 
             } else {
-				
-				var to_remove = [];
+                var to_remove = [];
 
                 scene.traverse ( function( child ) {
                     if ( child instanceof THREE.Mesh &&!child.userData.keepMe === true ) {
@@ -60,18 +59,20 @@ game.core = function () {
                // _level.initWorld(sceneWidth,sceneHeight);
                 //_level.initPersona();
                 scene.remove(game.persona);
-				game.persona.position.y = 0;
-				
+                game.persona.position.y = 0;
+
                 scene.add(game.persona);
-				
-				_level.initLVL(sceneWidth,sceneHeight);
-				scene.onSimulationResume();
-				isPaused = false;
-				
-				score = 0;
-				music.pauseSound(music.soundGameOver);
-				music.loadSound();
-				             
+
+                _level.initLVL(sceneWidth,sceneHeight);
+                scene.onSimulationResume();
+                isPaused = false;
+
+                score = 0;
+                music.pauseSound(music.soundGameOver);
+                music.loadSound();
+                music.playSound(music.soundTrack);
+                //setTimeout(function () {}, 4000);
+
             }
 
         }
@@ -102,6 +103,7 @@ game.core = function () {
             renderer.render(scene,camera);
         },
         initPersona: function () {
+
                     loader.load('resources/octocat.STL', function (geometry) {
                         var material = new THREE.MeshNormalMaterial();
                         game.persona = new Physijs.CylinderMesh(geometry, material);
@@ -109,7 +111,7 @@ game.core = function () {
                         game.persona.rotation.set(-1.5, 0, -1.5);
                         game.persona.__dirtyRotation = true;
                         game.persona.addEventListener( 'collision', function functionName(obj) {
-                            if (obj.typeObject != 'line') _level._gameOver();
+                            if (obj.collision == 'true') _level._gameOver();
                         });
                         game.persona.position.z=game.persona.geometry.boundingBox.max.z/2;
                         game.persona.position.x=-400;
@@ -120,6 +122,7 @@ game.core = function () {
                         game.persona.setAngularVelocity({x: 0, y: 0, z: 0});
                         var effect = new THREE.Vector3(0,jumpForce,0);
                         game.persona.setLinearVelocity(effect);
+                        game.persona.typeObject = 'persona';
                     })
                 });
             return game.persona;
@@ -132,25 +135,47 @@ game.core = function () {
 
         },
         spawnObstacles: function () {
-          function setInvisibleLine() {
+          function setDeletingLine() {
             let geometry = new THREE.CubeGeometry(0.1,sceneHeight,0.1);
             let material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
                 color: 'black',
             }),.8,.3);
 
-            let invisibleLine = new Physijs.BoxMesh(geometry,material);
+            let deletingLine = new Physijs.BoxMesh(geometry,material);
 
-            invisibleLine.position.x = - sceneWidth/2-100;
-            invisibleLine.position.z = invisibleLine.geometry.boundingBox.max.z/2;
+            deletingLine.position.x = - sceneWidth / 2 - 200;
+            deletingLine.position.z = deletingLine.geometry.boundingBox.max.z/2;
             var effect = new THREE.Vector3(0,0,0);
-            invisibleLine.addEventListener( 'collision', function functionName(obj) {
+            deletingLine.addEventListener( 'collision', function functionName(obj) {
               deleteObstacles(obj);
-              setObstacles(300);
             });
 
-            scene.add(invisibleLine);
-            _level.setVectorSpeed(invisibleLine, effect);
+            scene.add(deletingLine);
+            _level.setVectorSpeed(deletingLine, effect);
           };
+
+          function setSpawnLine(distance) {
+              geometry = new THREE.CubeGeometry(0.01, sceneHeight, 0.01);
+              material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
+                  color: 'black',
+              }),.8,.3);
+
+              let scoreLine = new Physijs.CylinderMesh(geometry,material);
+              scoreLine.position.x = sceneWidth / 2 - distance;
+              scoreLine.position.y = 0;
+              scoreLine.position.z = 0;
+              scoreLine.addEventListener( 'collision', function functionName(obj) {
+                  if (obj.typeObject === 'obstacle') {
+                      setObstacles(gap);
+                      obj.typeObject = 'passed';
+                  }
+
+              });
+              var effect = new THREE.Vector3(0,0,0);
+              scene.add(scoreLine);
+              _level.setVectorSpeed(scoreLine, effect);
+              scoreLine.typeObject = 'spawnline';
+          }
 
           function setScoreLine(gap, positionX, positionY, vector1, vector2) {
               geometry = new THREE.CubeGeometry(0.01, gap - 50, 0.01);
@@ -163,20 +188,23 @@ game.core = function () {
               scoreLine.position.x = positionX;
               scoreLine.position.y = positionY;
               scoreLine.position.z = 50;
-              scoreLine.addEventListener( 'collision', function functionName() {
-                music.playSound(music.soundEffect);
-                score++;
-                deleteObstacles(scoreLine);
+              scoreLine.addEventListener( 'collision', function functionName(obj) {
+                  if (obj.typeObject == 'persona') {
+                      music.playSound(music.soundEffect);
+                      score++;
+                      deleteObstacles(scoreLine);
+                  }
+
               });
               scene.add(scoreLine);
               _level.setVectorSpeed(scoreLine, vector1, vector2);
-              scoreLine.typeObject = "line";
+              scoreLine.typeObject = "scoreLine";
 
           };
 
-          function setObstacles(gap, distance = 0) {
+          function setObstacles(gap, position = 0) {
             let obstaclesUpper, obstaclesLower;
-            const upperHeight = Math.random() * (sceneHeight - gap);
+            const upperHeight = Math.random() * (sceneHeight - gap - 100) + 50;
             const lowerPosition = sceneHeight / 2 - upperHeight - gap;
             const lowerHeight = Math.abs(-sceneHeight / 2 - lowerPosition);
 
@@ -187,23 +215,26 @@ game.core = function () {
             }),.8,.3);
 
             obstaclesUpper = new Physijs.BoxMesh(geometry,material);
-            obstaclesUpper.position.x = sceneWidth / 2 + 200 + distance;
+            obstaclesUpper.position.x = sceneWidth / 2 + 150 - position;
             obstaclesUpper.position.y= sceneHeight/2 - (upperHeight / 2);
             obstaclesUpper.position.z = 50;
             var effect = new THREE.Vector3(0,0,0);
             var effect1 = new THREE.Vector3(-200,0,0);
             scene.add(obstaclesUpper);
             _level.setVectorSpeed(obstaclesUpper, effect, effect1);
+            obstaclesUpper.typeObject = 'obstacle';
+            obstaclesUpper.collision = 'true';
 
             geometry = new THREE.CubeGeometry(100, lowerHeight, 100);
             obstaclesLower = new Physijs.BoxMesh(geometry,material);
-            obstaclesLower.position.x = sceneWidth / 2 + 200 + distance;
+            obstaclesLower.position.x = sceneWidth / 2 + 150 - position;
             obstaclesLower.position.y= lowerPosition - lowerHeight / 2 ;
             obstaclesLower.position.z = 50;
             scene.add(obstaclesLower);
 
             _level.setVectorSpeed(obstaclesLower, effect, effect1);
             obstaclesUpper.lowerPart = obstaclesLower;
+            obstaclesLower.collision = 'true';
 
             let positionX = obstaclesUpper.position.x + 50 + 134;
             let positionY = sceneHeight/2 - upperHeight - 10 - gap/2;
@@ -217,12 +248,12 @@ game.core = function () {
               scene.remove(obj.lowerPart);
           };
 
-          setInvisibleLine();
+          let distance = 400;
+          let gap = 400;
 
-          let distance = 420;
-          for (let i = -1; i < 3; i++) {
-            setObstacles(300, distance * i);
-          }
+          setDeletingLine();
+          setSpawnLine(distance);
+          setObstacles(gap, distance / 2);
 
         },
 
@@ -240,7 +271,7 @@ game.core = function () {
         isPaused = true;
 		alert("GAME OVER");
         alert(`Your score ${score}`);
-            
+
         }
 
     };
