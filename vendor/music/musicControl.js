@@ -18,18 +18,19 @@ function music() {
 
 		playSound : function(sound) {
 			sound.play();
-			
+
 		},
 
 		pauseSound : function(sound) {
 			sound.pause();
 		},
-		
+
 		loadSound : function() {
 			document.getElementById('soundfameover').load();
+            document.getElementById('soundtrack').load();
 		}
 	}
-  
+
 }
 
 export {music};
