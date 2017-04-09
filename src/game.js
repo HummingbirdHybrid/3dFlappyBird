@@ -81,7 +81,7 @@ game.core = function () {
             scene.setGravity(new THREE.Vector3( 0,-250+(-10*game.sceneSpeed), 0 ));
             camera.position.z = 500;
 
-            const  galaxyTexture = THREE.ImageUtils.loadTexture('resources/galaxy_starfield.png');
+            const  galaxyTexture = THREE.ImageUtils.loadTexture('resources/textures/galaxy_starfield.png');
             let material	= new THREE.MeshBasicMaterial({
                 map	: galaxyTexture,
                 side	: THREE.BackSide,
@@ -100,7 +100,7 @@ game.core = function () {
         },
         initPersona: function () {
 
-                    loader.load('resources/octocat.STL', function (geometry) {
+                    loader.load('resources/models/octocat.STL', function (geometry) {
                         var material = new THREE.MeshNormalMaterial();
                         game.persona = new Physijs.CylinderMesh(geometry, material);
 
