@@ -39,22 +39,40 @@ game.core = function () {
           game.GUI.difficulty = document.getElementsByClassName("difficulty");
           game.GUI.greetingMsg = document.querySelector('#greetingMsg');
 
+          console.log(game.GUI.difficulty);
+
           function onPlayGame() {
               game.GUI.playButton.style.display = 'none';
               game.GUI.gameOverMsg.style.display = 'none';
               game.GUI.gameDifficulty.style.display = 'none';
               game.GUI.greetingMsg.style.display = 'none';
-              console.log(game.GUI.difficulty);
+              console.log(window.a=game.GUI.difficulty);
               isPaused = 'false';
           }
-          game.GUI.playButton.addEventListener('click',onPlayGame);
-          /* чини это */
-        //   document.getElementById("low").addEventListener('click', _level.easyLevel());
-        //   document.getElementById("middle").addEventListener('click', _level.mediumLevel());
-        //   document.getElementById("hisgh").addEventListener('click', _level.hardLevel());
+            game.GUI.playButton.addEventListener('click',onPlayGame);
 
             for (var i = 0; i < game.GUI.difficulty.length; i++) {
                 game.GUI.difficulty[i].addEventListener('click', onPlayGame, false);
+            }
+            game.GUI.difficulty['low'].addEventListener('click',_game.setDifficulty.low);
+            game.GUI.difficulty['middle'].addEventListener('click',_game.setDifficulty.middle);
+            game.GUI.difficulty['high'].addEventListener('click',_game.setDifficulty.high);
+        },
+        setDifficulty:{
+            low:function () {
+                game.sceneSpeed = 1;
+                game.gap = 400;
+                game.distance = 400;
+            },
+            middle:function () {
+                game.sceneSpeed = 1.5;
+                game.gap = 300;
+                game.distance = 300;
+            },
+            high:function () {
+                game.sceneSpeed = 2;
+                game.gap = 200;
+                game.distance = 200;
             }
         },
         _runEngine:function () {
@@ -322,25 +340,6 @@ game.core = function () {
           obj.setLinearVelocity(vector2);
           obj.setAngularVelocity(vector1);
         },
-
-        easyLevel: function() {
-            game.sceneSpeed = 1;
-            game.gap = 400;
-            game.distance = 400;
-        },
-
-        mediumLevel: function() {
-            game.sceneSpeed = 1.5;
-            game.gap = 300;
-            game.distance = 300;
-        },
-
-        hardLevel: function() {
-            game.sceneSpeed = 2;
-            game.gap = 200;
-            game.distance = 200;
-        },
-
         checkScore: function(speed) {
             if (score % 5 === 0 && score !== 0) game.sceneSpeed += 0.1;
         },
