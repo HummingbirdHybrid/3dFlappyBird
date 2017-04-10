@@ -14,20 +14,43 @@ game.core = function () {
     var score = 0;
     var scene = new Physijs.Scene();
     var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 10000 );
-    var controls = new OrbitControls(camera);
+ //   var controls = new OrbitControls(camera);
     var container = document.querySelector('#gameContainer');
     var gameArea = document.querySelector('#gameArea');
     var renderer = new THREE.WebGLRenderer({ antialias: true, canvas: gameArea });
     var sceneWidth = gameArea.offsetWidth, sceneHeight = gameArea.offsetHeight;
-    var isPaused = 'false';
+    var isPaused = 'waiting';
 	var music = Music.music();
     var _game = {
         init:function () {
 			_level.initPersona();
             _level.initWorld(sceneWidth,sceneHeight);
             _level.initLVL(sceneWidth,sceneHeight);
+            _game.initGUI();
 			_game._runEngine();
+        },
+        initGUI:function () {
+          game.GUI ={};
+          game.GUI.playButton = document.querySelector('#playButton');
+          game.GUI.scoreTable = document.querySelector('#scoreTable');
+          game.GUI.gameOverMsg = document.querySelector('#gameOverMsg');
+          game.GUI.endScore = document.querySelector('#endScore');
+          game.GUI.gameDifficulty = document.querySelector('#gameDifficulty');
+          game.GUI.difficulty = document.getElementsByClassName("difficulty");
+          game.GUI.greetingMsg = document.querySelector('#greetingMsg');
 
+          function onPlayGame() {
+              game.GUI.playButton.style.display = 'none';
+              game.GUI.gameOverMsg.style.display = 'none';
+              game.GUI.gameDifficulty.style.display = 'none';
+              game.GUI.greetingMsg.style.display = 'none';
+
+              isPaused = 'false';
+          }
+          game.GUI.playButton.addEventListener('click',onPlayGame);
+            for (var i = 0; i < game.GUI.difficulty.length; i++) {
+                game.GUI.difficulty[i].addEventListener('click', onPlayGame, false);
+            }
         },
         _runEngine:function () {
 
@@ -38,36 +61,10 @@ game.core = function () {
                 renderer.render( scene, camera );
 
             } else if (isPaused === 'waiting') {
-                render.render();
+                renderer.render( scene, camera );
             } else {
-                var to_remove = [];
-
-                scene.traverse ( function( child ) {
-                    if ( child instanceof THREE.Mesh &&!child.userData.keepMe === true ) {
-                        to_remove.push( child );
-                    }
-                } );
-
-                for ( var i = 0; i < to_remove.length; i++ ) {
-                    scene.remove( to_remove[i] );
-                }
-               // _level.initWorld(sceneWidth,sceneHeight);
-                //_level.initPersona();
-                scene.remove(game.persona);
-                game.persona.position.y = 0;
-
-                scene.add(game.persona);
-
-                _level.initLVL(sceneWidth,sceneHeight);
-                scene.onSimulationResume();
-                isPaused = 'false';
-
-                score = 0;
-                music.pauseSound(music.soundGameOver);
-                music.loadSound();
-                music.playSound(music.soundTrack);
+              _level.restartLVL();
             }
-
         }
     };
 
@@ -101,7 +98,11 @@ game.core = function () {
         initPersona: function () {
 
                     loader.load('resources/models/octocat.STL', function (geometry) {
-                        var material = new THREE.MeshNormalMaterial();
+                        const  personaTexture = THREE.ImageUtils.loadTexture('resources/textures/octocatpic.png');
+                        var material = new THREE.MeshPhongMaterial({
+                            map	: personaTexture,
+                        });
+
                         game.persona = new Physijs.CylinderMesh(geometry, material);
 
                         game.persona.rotation.set(-1.5, 0, -1.5);
@@ -128,7 +129,31 @@ game.core = function () {
           _level.spawnObstacles();
           music.initializeSound();
           music.playSound(music.soundTrack);
+        },
+        restartLVL:function () {
+            var to_remove = [];
 
+            scene.traverse ( function( child ) {
+                if ( child instanceof THREE.Mesh &&!child.userData.keepMe === true ) {
+                    to_remove.push( child );
+                }
+            } );
+
+            for ( var i = 0; i < to_remove.length; i++ ) {
+                scene.remove( to_remove[i] );
+            }
+            scene.remove(game.persona);
+            game.persona.position.y = 0;
+
+            scene.add(game.persona);
+
+            _level.initLVL(sceneWidth,sceneHeight);
+            scene.onSimulationResume();
+
+            score = 0;
+            music.pauseSound(music.soundGameOver);
+            music.loadSound();
+            music.playSound(music.soundTrack);
         },
         spawnObstacles: function () {
           function setDeletingLine() {
@@ -188,6 +213,7 @@ game.core = function () {
                   if (obj.typeObject == 'persona') {
                       music.playSound(music.soundEffect);
                       score++;
+                      game.GUI.scoreTable.textContent = score;
                       deleteObstacles(scoreLine);
                   }
 
@@ -294,12 +320,11 @@ game.core = function () {
         _gameOver:function() {
             music.pauseSound(music.soundTrack);
             music.playSound(music.soundGameOver);
-            setTimeout(function () {
-                isPaused = 'true';
-            }, 3000);
-            isPaused = 'waiting';
-    		alert("GAME OVER");
-            alert(`Your score ${score}`);
+            game.GUI.scoreTable.textContent = '0';
+            game.GUI.playButton.style.display = 'block';
+            game.GUI.gameOverMsg.style.display = 'block';
+            game.GUI.endScore.innerHTML = `Your score:${score}`;
+            isPaused = 'true';
         }
     };
     window.addEventListener('resize', function(){
