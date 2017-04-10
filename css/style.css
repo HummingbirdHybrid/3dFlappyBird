@@ -1,6 +1,8 @@
 body {
     margin: 0;
-    overflow: hidden
+    overflow: hidden;
+    color:white;
+    font-family: 'VT323', monospace;
 }
 canvas {
     width: 100%;
@@ -9,23 +11,78 @@ canvas {
 #gameContainer {
     width: 100%;
     height: 100%;
-
 }
 #gameContainer canvas{
     position: relative;
 }
+#scoreTable{
+    display: block;
+    position: absolute;
+    top: 7%;
+    color: white;
+    left: 50%;
+    z-index: 1;
+    font-size: 50px;
+}
 
-{
+#playButton{
     width: 220px;
     height: 120px;
-    background-color: white;
     position: absolute;
     top: 50%;
-    left: 50%;
+    left: 44%;
     text-align: center;
-    margin: -60px 0 0 -110px;
-    display: block;
+    display: none;
+    background:url(../resources/GUI/play.png) no-repeat;
+    background-size: 100%;
 }
 #playButton:hover{
     cursor: pointer;
+    transform: scale(1.35);
+}
+#gameOverMsg{
+    position: absolute;
+    z-index: 1;
+    font-size: 50px;
+    top: 60%;
+    left: 44%;
+    display: none;
+    margin-top:4%;
+}
+#endScore{
+    font-size: 40px;
+}
+#greetingMsg{
+    font-size: 60px;
+    position: absolute;
+    top: 30%;
+    left: 10%;
+}
+#gameDifficulty{
+    position: absolute;
+    top: 65%;
+    left: 40%;
+    display: inline-flex;
+}
+.difficulty{
+    z-index: 1;
+    width: 130px;
+    height: 80px;
+}
+.difficulty:hover{
+    cursor: pointer;
+    transform: scale(0.8);
+    z-index: 2;
+}
+#low{
+    background:url(../resources/GUI/low.png) no-repeat;
+    background-size: 100%;
+}
+#middle{
+    background:url(../resources/GUI/mid.png) no-repeat;
+    background-size: 100%;
+}
+#high{
+    background:url(../resources/GUI/high.png) no-repeat;
+    background-size: 100%;
 }
