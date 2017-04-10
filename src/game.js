@@ -44,10 +44,15 @@ game.core = function () {
               game.GUI.gameOverMsg.style.display = 'none';
               game.GUI.gameDifficulty.style.display = 'none';
               game.GUI.greetingMsg.style.display = 'none';
-
+              console.log(game.GUI.difficulty);
               isPaused = 'false';
           }
           game.GUI.playButton.addEventListener('click',onPlayGame);
+          /* чини это */
+        //   document.getElementById("low").addEventListener('click', _level.easyLevel());
+        //   document.getElementById("middle").addEventListener('click', _level.mediumLevel());
+        //   document.getElementById("hisgh").addEventListener('click', _level.hardLevel());
+
             for (var i = 0; i < game.GUI.difficulty.length; i++) {
                 game.GUI.difficulty[i].addEventListener('click', onPlayGame, false);
             }
@@ -159,7 +164,7 @@ game.core = function () {
           function setDeletingLine() {
             let geometry = new THREE.CubeGeometry(0.1,sceneHeight,0.1);
             let material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
-                color: 'black',
+                visible: false,
             }),.8,.3);
 
             let deletingLine = new Physijs.BoxMesh(geometry,material);
@@ -178,7 +183,7 @@ game.core = function () {
           function setSpawnLine(distance) {
               geometry = new THREE.CubeGeometry(0.01, sceneHeight, 0.01);
               material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
-                  color: 'black',
+                  visible: false,
               }),.8,.3);
 
               let scoreLine = new Physijs.CylinderMesh(geometry,material);
@@ -201,7 +206,7 @@ game.core = function () {
           function setScoreLine(gap, positionX, positionY, vector1, vector2) {
               geometry = new THREE.CubeGeometry(0.01, gap - 50, 0.01);
               material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
-                  color: 'black',
+                  visible: false,
                   // wireframe: true
               }),.8,.3);
 
@@ -214,6 +219,7 @@ game.core = function () {
                       music.playSound(music.soundEffect);
                       score++;
                       game.GUI.scoreTable.textContent = score;
+                      _level.checkScore();
                       deleteObstacles(scoreLine);
                   }
 
@@ -266,9 +272,9 @@ game.core = function () {
           };
 
           function setWalls() {
-              geometry = new THREE.CubeGeometry(sceneWidth, 0.01, 0.01);
+              geometry = new THREE.CubeGeometry(sceneWidth, 2, 2);
               material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
-                  color: 'black',
+                  visible: false,
               }),.8,.3);
 
               let wallUpper = new Physijs.BoxMesh(geometry,material);
@@ -276,7 +282,7 @@ game.core = function () {
               wallUpper.position.y = sceneHeight / 2;
               wallUpper.position.z = 0;
               let effect = new THREE.Vector3(0,0,0);
-              wallUpper.addEventListener( 'collision', function functionName(obj) {
+              wallUpper.addEventListener( 'collision', function (obj) {
                   if (obj.typeObject == 'persona') _level._gameOver();
               });
 
@@ -288,7 +294,7 @@ game.core = function () {
               wallLower.position.x = 0;
               wallLower.position.y = - sceneHeight / 2;
               wallLower.position.z = 0;
-              wallLower.addEventListener( 'collision', function functionName(obj) {
+              wallLower.addEventListener( 'collision', function (obj) {
                   if (obj.typeObject == 'persona') _level._gameOver();
               });
               scene.add(wallLower);
@@ -315,6 +321,28 @@ game.core = function () {
           obj.setLinearFactor(vector1);
           obj.setLinearVelocity(vector2);
           obj.setAngularVelocity(vector1);
+        },
+
+        easyLevel: function() {
+            game.sceneSpeed = 1;
+            game.gap = 400;
+            game.distance = 400;
+        },
+
+        mediumLevel: function() {
+            game.sceneSpeed = 1.5;
+            game.gap = 300;
+            game.distance = 300;
+        },
+
+        hardLevel: function() {
+            game.sceneSpeed = 2;
+            game.gap = 200;
+            game.distance = 200;
+        },
+
+        checkScore: function(speed) {
+            if (score % 5 === 0 && score !== 0) game.sceneSpeed += 0.1;
         },
 
         _gameOver:function() {
