@@ -1,30 +1,29 @@
 
 window.game = window.game || {};
-var THREE = require('three');
-var OrbitControls = require('three-orbit-controls')(THREE);
-var Physijs = require('../vendor/physijs/physi.js')(THREE);//unable to use physijs or webpack-physijs npm modules
-var STLLoader = require('three-stl-loader')(THREE);
-var Music = require('../vendor/music/musicControl');
-var loader = new STLLoader();
+const THREE = require('three');
+const OrbitControls = require('three-orbit-controls')(THREE);
+const Physijs = require('../vendor/physijs/physi.js')(THREE);//unable to use physijs or webpack-physijs npm modules
+const STLLoader = require('three-stl-loader')(THREE);
+const Music = require('../vendor/music/musicControl');
+const loader = new STLLoader();
 Physijs.scripts.worker = 'vendor/physijs/physijs_worker.js';//unavoidable nail
-
 
 game.core = function () {
     var jumpForce = 300;
     var score = 0;
-    var scene = new Physijs.Scene();
-    var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 10000 );
- //   var controls = new OrbitControls(camera);
-    var container = document.querySelector('#gameContainer');
-    var gameArea = document.querySelector('#gameArea');
-    var renderer = new THREE.WebGLRenderer({ antialias: true, canvas: gameArea });
+    const scene = new Physijs.Scene();
+    const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 10000 );
+  // var controls = new OrbitControls(camera);
+    const gameArea = document.querySelector('#gameArea');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, canvas: gameArea });
     var sceneWidth = gameArea.offsetWidth, sceneHeight = gameArea.offsetHeight;
-    var isPaused = 'waiting';
-	var music = Music.music();
-    var _game = {
+    var gameState = 'pending';
+	const music = Music.music();
+    const _game = {
         init:function () {
 			_level.initPersona();
             _level.initWorld(sceneWidth,sceneHeight);
+            _level.initBackground();
             _level.initLVL(sceneWidth,sceneHeight);
             _game.initGUI();
 			_game._runEngine();
@@ -39,15 +38,15 @@ game.core = function () {
           game.GUI.difficulty = document.getElementsByClassName("difficulty");
           game.GUI.greetingMsg = document.querySelector('#greetingMsg');
 
-          console.log(game.GUI.difficulty);
+
 
           function onPlayGame() {
               game.GUI.playButton.style.display = 'none';
               game.GUI.gameOverMsg.style.display = 'none';
               game.GUI.gameDifficulty.style.display = 'none';
               game.GUI.greetingMsg.style.display = 'none';
-              console.log(window.a=game.GUI.difficulty);
-              isPaused = 'false';
+
+              gameState = 'running';
           }
             game.GUI.playButton.addEventListener('click',onPlayGame);
 
@@ -70,36 +69,37 @@ game.core = function () {
                 game.distance = 300;
             },
             high:function () {
-                game.sceneSpeed = 2;
-                game.gap = 200;
-                game.distance = 200;
+                game.sceneSpeed = 4;
+                game.gap = 250;
+                game.distance = 500;
             }
         },
         _runEngine:function () {
-
+            _game.background.backgroundTexture.offset.set(_game.background.backgroundTexture.offset.x += 0.0005,0);
             requestAnimationFrame( _game._runEngine );
 
-            if (isPaused === 'false') {
+            if (gameState === 'running') {
                 scene.simulate();
                 renderer.render( scene, camera );
 
-            } else if (isPaused === 'waiting') {
+            } else if (gameState === 'pending') {
                 renderer.render( scene, camera );
             } else {
               _level.restartLVL();
             }
+
         }
     };
 
 
-    var _level = {
+    const _level = {
         initWorld: function () {
             game.sceneSpeed = 1;
             game.gap = 300;
             game.distance = 300;
             renderer.setSize( sceneWidth, sceneHeight );
             scene.setGravity(new THREE.Vector3( 0,-250+(-10*game.sceneSpeed), 0 ));
-            camera.position.z = 500;
+            camera.position.z = 550;
 
             const  galaxyTexture = THREE.ImageUtils.loadTexture('resources/textures/galaxy_starfield.png');
             let material	= new THREE.MeshBasicMaterial({
@@ -121,9 +121,9 @@ game.core = function () {
         initPersona: function () {
 
                     loader.load('resources/models/octocat.STL', function (geometry) {
-                        const  personaTexture = THREE.ImageUtils.loadTexture('resources/textures/octocatpic.png');
+
                         var material = new THREE.MeshPhongMaterial({
-                            map	: personaTexture,
+                            color:0xFACE8D
                         });
 
                         game.persona = new Physijs.CylinderMesh(geometry, material);
@@ -147,11 +147,20 @@ game.core = function () {
                 });
             return game.persona;
         },
+        initBackground:function(){
+            _game.background = {};
+            _game.background.backgroundTexture = new THREE.TextureLoader().load( 'resources/textures/city.png' );
+            _game.background.backgroundTexture.wrapS = THREE.RepeatWrapping; //set background texture to repeat wrapping for animation
+            _game.background.backgroundPlane = new THREE.Mesh( new THREE.PlaneGeometry( sceneWidth,sceneHeight , 0 ), new THREE.MeshBasicMaterial( {map: _game.background.backgroundTexture, side: THREE.DoubleSide} ) );
+            _game.background.backgroundPlane.userData.keepMe=true;
+            _game.background.backgroundPlane.position.set( 0, 0, 50 );  //move the background texture back off the bird and pipe gates a bit
+            scene.add( _game.background.backgroundPlane );
+        },
 
         initLVL:function () {
-          _level.spawnObstacles();
-          music.initializeSound();
-          music.playSound(music.soundTrack);
+            _level.spawnObstacles();
+            music.initializeSound();
+            music.playSound(music.soundTrack);
         },
         restartLVL:function () {
             var to_remove = [];
@@ -256,8 +265,7 @@ game.core = function () {
 
             geometry = new THREE.CubeGeometry(100, upperHeight, 100);
             material = Physijs.createMaterial(  new THREE.MeshLambertMaterial({
-                color: 'white',
-                // wireframe: true
+                color: new THREE.Color("rgb(192, 0, 192)"),
             }),.8,.3);
 
             obstaclesUpper = new Physijs.BoxMesh(geometry,material);
@@ -351,7 +359,7 @@ game.core = function () {
             game.GUI.playButton.style.display = 'block';
             game.GUI.gameOverMsg.style.display = 'block';
             game.GUI.endScore.innerHTML = `Your score:${score}`;
-            isPaused = 'true';
+            gameState = 'paused';
         }
     };
     window.addEventListener('resize', function(){
