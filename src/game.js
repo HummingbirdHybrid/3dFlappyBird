@@ -13,7 +13,7 @@ game.core = function () {
     var score = 0;
     const scene = new Physijs.Scene();
     const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 10000 );
-  // var controls = new OrbitControls(camera);
+    var controls = new OrbitControls(camera);
     const gameArea = document.querySelector('#gameArea');
     const renderer = new THREE.WebGLRenderer({ antialias: true, canvas: gameArea });
     var sceneWidth = gameArea.offsetWidth, sceneHeight = gameArea.offsetHeight;
@@ -21,12 +21,12 @@ game.core = function () {
 	const music = Music.music();
     const _game = {
         init:function () {
-			_level.initPersona();
+      			_level.initPersona();
             _level.initWorld(sceneWidth,sceneHeight);
-            _level.initBackground();
+            //_level.initBackground();
             _level.initLVL(sceneWidth,sceneHeight);
             _game.initGUI();
-			_game._runEngine();
+			      _game._runEngine();
         },
         initGUI:function () {
           game.GUI ={};
@@ -75,7 +75,7 @@ game.core = function () {
             }
         },
         _runEngine:function () {
-            _game.background.backgroundTexture.offset.set(_game.background.backgroundTexture.offset.x += 0.0005,0);
+            //_game.background.backgroundTexture.offset.set(_game.background.backgroundTexture.offset.x += 0.0005,0);
             requestAnimationFrame( _game._runEngine );
 
             if (gameState === 'running') {
@@ -101,16 +101,36 @@ game.core = function () {
             scene.setGravity(new THREE.Vector3( 0,-250+(-10*game.sceneSpeed), 0 ));
             camera.position.z = 550;
 
-            const  galaxyTexture = THREE.ImageUtils.loadTexture('resources/textures/galaxy_starfield.png');
-            let material	= new THREE.MeshBasicMaterial({
-                map	: galaxyTexture,
-                side	: THREE.BackSide,
-                color	: 0x808080,
-            });
-            let geometry	= new THREE.SphereGeometry(9000, 32, 32);
-            let skySphere	= new THREE.Mesh(geometry, material);
-            skySphere.userData.keepMe = true;
-            scene.add(skySphere);
+            // const  galaxyTexture = THREE.ImageUtils.loadTexture('resources/textures/galaxy_starfield.png');
+            // let material	= new THREE.MeshBasicMaterial({
+            //     map	: galaxyTexture,
+            //     side	: THREE.BackSide,
+            //     color	: 0x808080,
+            // });
+            // let geometry	= new THREE.SphereGeometry(9000, 32, 32);
+            // let skySphere	= new THREE.Mesh(geometry, material);
+            // skySphere.userData.keepMe = true;
+            // scene.add(skySphere);
+            // const  galaxyTexture = THREE.ImageUtils.loadTexture('resources/textures/negy.jpg');
+            // var skybox = new SkyBox( renderer , galaxyTexture );
+
+            var materialArray = [];
+            materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( '../resources/textures/posx.jpg' ) }));
+            materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( '../resources/textures/negx.jpg' ) }));
+            materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( '../resources/textures/posy.jpg' ) }));
+            materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( '../resources/textures/negy.jpg' ) }));
+            materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( '../resources/textures/posz.jpg' ) }));
+            materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( '../resources/textures/negz.jpg' ) }));
+
+
+
+            for (var i = 0; i < 6; i++)
+               materialArray[i].side = THREE.BackSide;
+            var skyboxMaterial = new THREE.MeshFaceMaterial( materialArray );
+            var skyboxGeom = new THREE.CubeGeometry( 5000, 5000, 5000, 1, 1, 1 );
+            var skybox = new THREE.Mesh( skyboxGeom, skyboxMaterial );
+            skybox.userData.keepMe = true;
+            scene.add( skybox );
 
             const light = new THREE.PointLight(0xFFFF00);
             light.position.set(100, 0, 250);
@@ -213,11 +233,11 @@ game.core = function () {
                   visible: false,
               }),.8,.3);
 
-              let scoreLine = new Physijs.CylinderMesh(geometry,material);
-              scoreLine.position.x = sceneWidth / 2 - distance;
-              scoreLine.position.y = 0;
-              scoreLine.position.z = 0;
-              scoreLine.addEventListener( 'collision', function functionName(obj) {
+              let spawnLine = new Physijs.CylinderMesh(geometry,material);
+              spawnLine.position.x = sceneWidth / 2 - distance;
+              spawnLine.position.y = 0;
+              spawnLine.position.z = 0;
+              spawnLine.addEventListener( 'collision', function functionName(obj) {
                   if (obj.typeObject === 'obstacle') {
                       setObstacles(game.gap);
                       obj.typeObject = 'passed';
@@ -225,9 +245,9 @@ game.core = function () {
 
               });
               var effect = new THREE.Vector3(0,0,0);
-              scene.add(scoreLine);
-              _level.setVectorSpeed(scoreLine, effect);
-              scoreLine.typeObject = 'spawnline';
+              scene.add(spawnLine);
+              _level.setVectorSpeed(spawnLine, effect);
+              spawnLine.typeObject = 'spawnline';
           }
 
           function setScoreLine(gap, positionX, positionY, vector1, vector2) {
@@ -290,7 +310,7 @@ game.core = function () {
             obstaclesUpper.lowerPart = obstaclesLower;
             obstaclesLower.collision = 'true';
 
-            let positionX = obstaclesUpper.position.x + 50 + 134;
+            let positionX = obstaclesUpper.position.x + 60 + 50;
             let positionY = sceneHeight/2 - upperHeight - 10 - gap/2;
 
             setScoreLine(gap, positionX, positionY, effect, effect1);
